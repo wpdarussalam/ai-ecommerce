@@ -32,6 +32,9 @@ class OrderInfolist
                 TextEntry::make('updated_at')
                     ->dateTime()
                     ->placeholder('-'),
+                TextEntry::make('user.name')
+                    ->label('User')
+                    ->placeholder('-'),
             ]);
     }
 }

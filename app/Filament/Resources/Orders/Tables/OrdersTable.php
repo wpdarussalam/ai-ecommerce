@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\Orders\Tables;
 
-use Filament\Tables\Columns\SelectColumn;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -13,41 +16,44 @@ class OrdersTable
         return $table
             ->columns([
                 TextColumn::make('order_number')
-                    ->label('No. Pesanan')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('customer_name')
-                    ->label('Nama Pelanggan')
                     ->searchable(),
-
+                TextColumn::make('customer_name')
+                    ->searchable(),
+                TextColumn::make('customer_email')
+                    ->searchable(),
+                TextColumn::make('customer_phone')
+                    ->searchable(),
                 TextColumn::make('grand_total')
-                    ->label('Total Transaksi')
-                    ->money('IDR', locale: 'id_ID')
+                    ->numeric()
                     ->sortable(),
-
-                SelectColumn::make('status')
-                    ->label('Status Pesanan')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Diproses',
-                        'completed' => 'Selesai',
-                        'cancelled' => 'Dibatalkan',
-                    ]),
-
-                SelectColumn::make('payment_status')
-                    ->label('Status Bayar')
-                    ->options([
-                        'unpaid' => 'Belum Dibayar',
-                        'paid' => 'Lunas',
-                        'failed' => 'Gagal',
-                    ]),
-
+                TextColumn::make('status')
+                    ->searchable(),
+                TextColumn::make('payment_status')
+                    ->searchable(),
+                TextColumn::make('payment_method')
+                    ->searchable(),
                 TextColumn::make('created_at')
-                    ->label('Tanggal Pesan')
-                    ->dateTime('d M Y, H:i')
-                    ->sortable(),
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user.name')
+                    ->searchable(),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->filters([
+                //
+            ])
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 }
