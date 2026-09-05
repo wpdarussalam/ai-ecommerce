@@ -2,46 +2,34 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
-            ->columns([ // <-- Ditambahkan ->columns([
+            ->columns([
                 ImageColumn::make('image')
-                    ->label('Foto')
-                    ->disk('public')
-                    ->getStateUsing(function ($record) {
-                        if (filter_var($record->image, FILTER_VALIDATE_URL)) {
-                            return $record->image;
-                        }
-                        return $record->image;
-                    })
-                    ->defaultImageUrl('https://via.placeholder.com/150')
-                    ->square(), // <-- Ditambahkan koma pemisah di sini
+                    ->label('Foto'),
 
                 TextColumn::make('name')
                     ->label('Nama Produk')
                     ->searchable()
-                    ->sortable()
-                    ->description(fn ($record) => $record->sku ? "SKU: {$record->sku}" : null),
+                    ->sortable(),
 
                 TextColumn::make('category.name')
                     ->label('Kategori')
-                    ->badge()
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
 
                 TextColumn::make('price')
                     ->label('Harga')
@@ -50,31 +38,39 @@ class ProductsTable
 
                 TextColumn::make('stock')
                     ->label('Stok')
+                    ->sortable()
                     ->badge()
                     ->color(fn (int $state): string => match (true) {
-                        $state <= 5 => 'danger',
-                        $state <= 20 => 'warning',
+                        $state <= 0 => 'danger',
+                        $state <= 5 => 'warning',
                         default => 'success',
                     })
-                    ->sortable(),
-
-                IconColumn::make('status')
-                    ->label('Status')
-                    ->boolean(),
-            ]) // <-- Ditambahkan penutup array ])
+                    ->formatStateUsing(fn (int $state): string => match (true) {
+                        $state <= 0 => 'Habis (0)',
+                        $state <= 5 => "Menipis ({$state})",
+                        default => "Tersedia ({$state})",
+                    }),
+            ])
             ->filters([
-                TrashedFilter::make(),
+                SelectFilter::make('category_id')
+                    ->label('Kategori')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                // Filter Status Stok
+                Filter::make('low_stock')
+                    ->label('Stok Menipis (<= 5)')
+                    ->query(fn (Builder $query): Builder => $query->where('stock', '<=', 5)->where('stock', '>', 0)),
+
+                Filter::make('out_of_stock')
+                    ->label('Stok Habis (0)')
+                    ->query(fn (Builder $query): Builder => $query->where('stock', '<=', 0)),
             ])
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
-            ])
-            ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                ]),
+                DeleteAction::make(),
             ]);
     }
 }
