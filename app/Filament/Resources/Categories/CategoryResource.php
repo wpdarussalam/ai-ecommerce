@@ -16,13 +16,19 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static UnitEnum|string|null $navigationGroup = 'Shop';
+
+    protected static ?string $modelLabel = 'Kategori';
+
+    protected static ?string $pluralModelLabel = 'Kategori Produk';
 
     public static function form(Schema $schema): Schema
     {
@@ -57,7 +63,7 @@ class CategoryResource extends Resource
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
-{
-    return parent::getRecordRouteBindingEloquentQuery();
-}
+    {
+        return parent::getRecordRouteBindingEloquentQuery();
+    }
 }
