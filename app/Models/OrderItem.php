@@ -15,7 +15,12 @@ class OrderItem extends Model
         'product_id',
         'quantity',
         'unit_price',
-        'subtotal',
+        'total_price',
+    ];
+
+    protected $casts = [
+        'unit_price' => 'decimal:2',
+        'total_price' => 'decimal:2',
     ];
 
     public function order(): BelongsTo
