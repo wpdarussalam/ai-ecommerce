@@ -8,35 +8,37 @@ use Illuminate\Support\Carbon;
 
 class SalesChart extends ChartWidget
 {
-    protected ?string $heading = 'Grafik Penjualan Bulanan'; // Hilangkan kata 'static'
-
-    protected static ?int $sort = 2;
+    protected ?string $heading = 'Grafik Penjualan';
 
     protected function getData(): array
     {
-        $data = [];
-        $months = [];
+        $data = Order::where('status', '!=', 'cancelled')
+            ->selectRaw('DATE(created_at) as date, SUM(grand_total) as total')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->pluck('total', 'date')
+            ->toArray();
 
-        for ($month = 1; $month <= 12; $month++) {
-            $months[] = Carbon::create()->month($month)->translatedFormat('F');
-            
-            $data[] = Order::where('status', 'completed')
-                ->whereMonth('created_at', $month)
-                ->whereYear('created_at', date('Y'))
-                ->sum('grand_total');
+        $labels = [];
+        $totals = [];
+
+        foreach ($data as $date => $total) {
+            $labels[] = Carbon::parse($date)->format('d M Y');
+            $totals[] = (float) $total;
         }
 
         return [
             'datasets' => [
                 [
                     'label' => 'Total Penjualan (Rp)',
-                    'data' => $data,
-                    'fill' => 'start',
-                    'borderColor' => '#fbbf24',
-                    'backgroundColor' => 'rgba(251, 191, 36, 0.1)',
+                    'data' => $totals,
+                    'borderColor' => '#eab308',
+                    'backgroundColor' => 'rgba(234, 179, 8, 0.15)',
+                    'fill' => true,
+                    'tension' => 0.3,
                 ],
             ],
-            'labels' => $months,
+            'labels' => $labels,
         ];
     }
 
