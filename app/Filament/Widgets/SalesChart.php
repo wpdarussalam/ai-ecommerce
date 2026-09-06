@@ -13,7 +13,7 @@ class SalesChart extends ChartWidget
     protected function getData(): array
     {
         $data = Order::where('status', '!=', 'cancelled')
-            ->selectRaw('DATE(created_at) as date, SUM(grand_total) as total')
+            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->pluck('total', 'date')

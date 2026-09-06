@@ -1,60 +1,85 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Orders;
 
-use App\Filament\Resources\OrderResource\Pages;
+use App\Filament\Resources\Orders\Pages;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShippingRate;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Repeater;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+
+// Actions
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-shopping-bag';
 
-    public static function form(Form $form): Form
+    protected static \UnitEnum|string|null $navigationGroup = 'Shop';
+
+    protected static ?int $navigationSort = 1;
+
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Informasi Pelanggan & Pengiriman')
+        return $schema
+            ->components([
+                Section::make('Informasi Pelanggan & Pengiriman')
                     ->schema([
-                        Forms\Components\Select::make('customer_id')
+                        Select::make('customer_id')
                             ->label('Pelanggan')
-                            ->options(Customer::pluck('name', 'id'))
+                            ->relationship('customer', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function ($state, callable $set) {
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->label('Nama Lengkap')
+                                    ->required(),
+                                TextInput::make('email')
+                                    ->email()
+                                    ->required(),
+                                TextInput::make('phone')
+                                    ->label('No. HP / WA'),
+                                Textarea::make('address')
+                                    ->label('Alamat'),
+                            ])
+                            ->afterStateUpdated(function ($state, $set) {
                                 $customer = Customer::find($state);
                                 if ($customer && isset($customer->address)) {
                                     $set('shipping_address', $customer->address);
                                 }
                             }),
 
-                        Forms\Components\Select::make('shipping_rate_id')
+                        Select::make('shipping_rate_id')
                             ->label('Kota Tujuan / Ongkir')
                             ->options(ShippingRate::where('is_active', true)->pluck('city_name', 'id'))
                             ->searchable()
                             ->live()
-                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                            ->afterStateUpdated(function ($state, $set, $get) {
                                 $rate = ShippingRate::find($state);
-                                $shippingCost = $rate ? $rate->cost : 0;
+                                $shippingCost = $rate ? (float) $rate->cost : 0;
                                 $set('shipping_cost', $shippingCost);
 
-                                $subtotal = $get('subtotal') ?? 0;
-                                $set('total_amount', $subtotal + $shippingCost);
+                                self::recalculateTotals($get, $set);
                             })
                             ->required(),
 
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->label('Status Pesanan')
                             ->options([
                                 'pending' => 'Pending',
@@ -66,103 +91,180 @@ class OrderResource extends Resource
                             ->default('pending')
                             ->required(),
 
-                        Forms\Components\Textarea::make('shipping_address')
+                        Textarea::make('shipping_address')
                             ->label('Alamat Lengkap Pengiriman')
                             ->columnSpanFull(),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Detail Item Pesanan')
+                Section::make('Detail Item Pesanan')
                     ->schema([
-                        Forms\Components\Repeater::make('items')
-                            ->label('Daftar Produk')
-                            ->relationship('items')
+                        Repeater::make('items')
+                            ->relationship()
                             ->schema([
-                                Forms\Components\Select::make('product_id')
+                                // 1. Pilih Produk
+                                Select::make('product_id')
                                     ->label('Produk')
                                     ->options(Product::pluck('name', 'id'))
-                                    ->searchable()
+                                    ->required()
                                     ->live()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $product = Product::find($state);
-                                        if ($product) {
-                                            $price = $product->price;
-                                            $qty = $get('quantity') ?? 1;
+                                    ->afterStateUpdated(function ($state, $set, $get) {
+                                        if ($state) {
+                                            $product = Product::find($state);
+                                            $price = $product?->price ?? 0;
+                                            $quantity = (int) ($get('quantity') ?? 1);
+
                                             $set('unit_price', $price);
-                                            $set('total_price', $price * $qty);
+                                            $set('subtotal', $price * $quantity);
                                         }
-                                    })
-                                    ->required()
-                                    ->columnSpan(5),
+                                    }),
 
-                                Forms\Components\TextInput::make('quantity')
-                                    ->label('Jumlah')
-                                    ->numeric()
-                                    ->default(1)
-                                    ->minValue(1)
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $unitPrice = $get('unit_price') ?? 0;
-                                        $set('total_price', $unitPrice * $state);
-                                    })
-                                    ->required()
-                                    ->columnSpan(2),
-
-                                Forms\Components\TextInput::make('unit_price')
+                                // 2. Harga Satuan (Bisa Edit Manual)
+                                TextInput::make('unit_price')
                                     ->label('Harga Satuan')
                                     ->numeric()
                                     ->prefix('Rp')
-                                    ->readOnly()
-                                    ->dehydrated()
-                                    ->columnSpan(2),
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, $set, $get) {
+                                        $quantity = (int) ($get('quantity') ?? 1);
+                                        $set('subtotal', (float) $state * $quantity);
+                                    }),
 
-                                Forms\Components\TextInput::make('total_price')
-                                    ->label('Total')
+                                // 3. Qty
+                                TextInput::make('quantity')
+                                    ->label('Qty')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, $set, $get) {
+                                        $price = (float) ($get('unit_price') ?? 0);
+                                        $set('subtotal', (int) $state * $price);
+                                    }),
+
+                                // 4. Subtotal Item
+                                TextInput::make('subtotal')
+                                    ->label('Subtotal')
                                     ->numeric()
                                     ->prefix('Rp')
-                                    ->readOnly()
-                                    ->dehydrated()
-                                    ->columnSpan(3),
+                                    ->readOnly(),
                             ])
-                            ->columns(12)
-                            ->columnSpanFull()
+                            ->columns(4)
                             ->live()
-                            ->afterStateUpdated(function (callable $get, callable $set) {
-                                $items = $get('items') ?? [];
-                                $subtotal = 0;
-                                foreach ($items as $item) {
-                                    $subtotal += ($item['total_price'] ?? 0);
-                                }
-                                $set('subtotal', $subtotal);
-                                $shippingCost = $get('shipping_cost') ?? 0;
-                                $set('total_amount', $subtotal + $shippingCost);
+                            ->afterStateUpdated(function ($get, $set) {
+                                self::recalculateTotals($get, $set);
                             }),
                     ]),
 
-                Forms\Components\Section::make('Rincian Pembayaran')
+                Section::make('Ringkasan Pembayaran')
                     ->schema([
-                        Forms\Components\TextInput::make('subtotal')
+                        TextInput::make('subtotal')
                             ->label('Subtotal Produk')
                             ->numeric()
                             ->prefix('Rp')
-                            ->readOnly()
-                            ->dehydrated(),
+                            ->readOnly(),
 
-                        Forms\Components\TextInput::make('shipping_cost')
+                        TextInput::make('shipping_cost')
                             ->label('Ongkos Kirim')
                             ->numeric()
                             ->prefix('Rp')
-                            ->readOnly()
-                            ->dehydrated(),
+                            ->readOnly(),
 
-                        Forms\Components\TextInput::make('total_amount')
+                        TextInput::make('total_amount')
                             ->label('Total Bayar')
                             ->numeric()
                             ->prefix('Rp')
-                            ->readOnly()
-                            ->dehydrated(),
+                            ->readOnly(),
                     ])->columns(3),
             ]);
     }
 
-    // ... sisanya (table, getPages, dll) biarkan tetap seperti semula
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('order_number')
+                    ->label('No. Order')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('customer.name')
+                    ->label('Pelanggan')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'processing' => 'info',
+                        'shipped' => 'primary',
+                        'completed' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->label('Total Bayar')
+                    ->money('IDR')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Tanggal')
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+            ])
+            ->filters([])
+            ->actions([
+                Action::make('print')
+                    ->label('Cetak')
+                    ->icon('heroicon-o-printer')
+                    ->color('success')
+                    ->url(fn (Order $record): string => route('orders.print', $record))
+                    ->openUrlInNewTab(),
+
+                EditAction::make(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListOrders::route('/'),
+            'create' => Pages\CreateOrder::route('/create'),
+            'edit' => Pages\EditOrder::route('/{record}/edit'),
+        ];
+    }
+
+    /**
+     * Hitung ulang Subtotal Produk & Total Bayar
+     */
+    public static function recalculateTotals($get, $set): void
+    {
+        $items = $get('items') ?? [];
+        $subtotal = 0;
+
+        foreach ($items as $item) {
+            $unitPrice = (float) ($item['unit_price'] ?? 0);
+            $quantity = (int) ($item['quantity'] ?? 1);
+            $subtotal += ($unitPrice * $quantity);
+        }
+
+        $set('subtotal', $subtotal);
+
+        $shippingCost = (float) ($get('shipping_cost') ?? 0);
+
+        $set('total_amount', $subtotal + $shippingCost);
+    }
 }

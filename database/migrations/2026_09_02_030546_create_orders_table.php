@@ -14,7 +14,7 @@ return new class extends Migration
         $table->foreignId('shipping_rate_id')->nullable()->constrained()->nullOnDelete();
         $table->string('order_number')->unique();
         $table->string('status')->default('pending');
-        $table->decimal('subtotal', 12, 2)->default(0);
+        $table->decimal('subtotal', 12, 2)->nullable();
         $table->decimal('shipping_cost', 12, 2)->default(0);
         $table->decimal('total_amount', 12, 2)->default(0);
         $table->text('shipping_address')->nullable();

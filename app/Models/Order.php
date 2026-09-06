@@ -12,15 +12,15 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-       'customer_id',
-    'shipping_rate_id',
-    'order_number',
-    'status',
-    'shipping_cost',
-    'subtotal',
-    'total_amount',
-    'shipping_address',
-    'notes',
+        'customer_id',
+        'shipping_rate_id',
+        'order_number',
+        'status',
+        'shipping_cost',
+        'subtotal',
+        'total_amount',
+        'shipping_address',
+        'notes',
     ];
 
     protected $casts = [

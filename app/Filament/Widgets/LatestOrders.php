@@ -24,7 +24,7 @@ class LatestOrders extends BaseWidget
                     ->label('No. Order'),
                 Tables\Columns\TextColumn::make('customer_name')
                     ->label('Pelanggan'),
-                Tables\Columns\TextColumn::make('grand_total')
+                Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total')
                     ->money('IDR'),
                 Tables\Columns\TextColumn::make('status')
@@ -34,6 +34,7 @@ class LatestOrders extends BaseWidget
                         'processing' => 'info',
                         'completed' => 'success',
                         'cancelled' => 'danger',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal')

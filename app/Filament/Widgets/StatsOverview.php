@@ -12,7 +12,7 @@ class StatsOverview extends BaseWidget
     protected function getStats(): array
     {
         // Menghitung omset dari semua order yang tidak dibatalkan
-        $totalRevenue = Order::where('status', '!=', 'cancelled')->sum('grand_total');
+        $totalRevenue = Order::where('status', '!=', 'cancelled')->sum('total_amount');
         $totalOrders = Order::count();
         $totalProducts = Product::count();
 
