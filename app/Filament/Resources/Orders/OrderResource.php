@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShippingRate;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -95,6 +96,60 @@ class OrderResource extends Resource
                             ->label('Alamat Lengkap Pengiriman')
                             ->columnSpanFull(),
                     ])->columns(3),
+
+                // --- Informasi Pembayaran ---
+                Section::make('Informasi Pembayaran')
+                    ->schema([
+                        Select::make('payment_method')
+                            ->label('Metode Pembayaran')
+                            ->options([
+                                'bank_transfer' => 'Transfer Bank',
+                                'cod' => 'Cash on Delivery (COD)',
+                                'ewallet' => 'e-Wallet (Qris/Gopay/Ovo)',
+                                'cash' => 'Tunai / Cash',
+                            ])
+                            ->default('bank_transfer')
+                            ->required(),
+
+                        Select::make('payment_status')
+                            ->label('Status Pembayaran')
+                            ->options([
+                                'pending' => 'Menunggu Pembayaran',
+                                'paid' => 'Sudah Dibayar',
+                                'failed' => 'Gagal / Kadaluwarsa',
+                            ])
+                            ->default('pending')
+                            ->required(),
+
+                        FileUpload::make('payment_proof')
+                            ->label('Bukti Pembayaran')
+                            ->image()
+                            ->directory('payment-proofs')
+                            ->columnSpanFull(),
+                    ])->columns(2),
+
+                // --- Informasi Pengiriman & Resi ---
+                Section::make('Informasi Pengiriman & Resi')
+                    ->schema([
+                        Select::make('courier')
+                            ->label('Ekspedisi / Kurir')
+                            ->options([
+                                'jne' => 'JNE Express',
+                                'jnt' => 'J&T Express',
+                                'sicepat' => 'SiCepat',
+                                'pos' => 'Pos Indonesia',
+                                'tiki' => 'TIKI',
+                                'spx' => 'Shopee Xpress (SPX)',
+                                'maxim' => 'Maxim Delivery',
+                                'instant' => 'Gojek / Grab (Instant)',
+                            ])
+                            ->nullable(),
+
+                        TextInput::make('tracking_number')
+                            ->label('Nomor Resi (AWB)')
+                            ->placeholder('Masukkan nomor resi pengiriman')
+                            ->nullable(),
+                    ])->columns(2),
 
                 Section::make('Detail Item Pesanan')
                     ->schema([
@@ -204,6 +259,27 @@ class OrderResource extends Resource
                         'cancelled' => 'danger',
                         default => 'gray',
                     }),
+
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('Bayar')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'paid' => 'success',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('courier')
+                    ->label('Kurir')
+                    ->formatStateUsing(fn ($state) => strtoupper($state ?? '-'))
+                    ->placeholder('-'),
+
+                Tables\Columns\TextColumn::make('tracking_number')
+                    ->label('No. Resi')
+                    ->searchable()
+                    ->placeholder('Belum ada resi')
+                    ->copyable(),
 
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total Bayar')

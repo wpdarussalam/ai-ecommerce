@@ -27,7 +27,15 @@
                 <h1 class="title">INVOICE</h1>
                 <p style="margin: 2px 0;"><strong>No. Order:</strong> {{ $order->order_number }}</p>
                 <p style="margin: 2px 0;"><strong>Tanggal:</strong> {{ $order->created_at->format('d/m/Y H:i') }}</p>
-                <p style="margin: 2px 0;"><strong>Status:</strong> {{ ucfirst($order->status) }}</p>
+                <p style="margin: 2px 0;"><strong>Status Order:</strong> {{ ucfirst($order->status) }}</p>
+                <!-- Tambahan Informasi Pembayaran -->
+                <p style="margin: 2px 0;"><strong>Metode Bayar:</strong> {{ strtoupper(str_replace('_', ' ', $order->payment_method ?? '-')) }}</p>
+                <p style="margin: 2px 0;">
+                    <strong>Status Bayar:</strong> 
+                    <span style="font-weight: bold; color: {{ $order->payment_status === 'paid' ? '#16a34a' : ($order->payment_status === 'failed' ? '#dc2626' : '#d97706') }};">
+                        {{ ucfirst($order->payment_status ?? 'pending') }}
+                    </span>
+                </p>
             </td>
             <td class="text-right">
                 <h3 style="margin: 0 0 5px 0;">Tujuan Pengiriman:</h3>

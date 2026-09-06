@@ -4,43 +4,72 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'customer_id',
-        'shipping_rate_id',
-        'order_number',
-        'status',
-        'shipping_cost',
-        'subtotal',
-        'total_amount',
-        'shipping_address',
-        'notes',
-    ];
+    protected $guarded = [];
 
-    protected $casts = [
-        'shipping_cost' => 'decimal:2',
-        'subtotal' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-    ];
-
-    public function customer(): BelongsTo
+    public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
-    public function shippingRate(): BelongsTo
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function shippingRate()
     {
         return $this->belongsTo(ShippingRate::class);
     }
 
-    public function items(): HasMany
+    /**
+     * Logika Otomatisasi Stok Produk
+     */
+    protected static function booted(): void
     {
-        return $this->hasMany(OrderItem::class);
+        // Potong stok saat pesanan baru dibuat
+        static::created(function (Order $order) {
+            self::reduceStock($order);
+        });
+
+        // Pengelolaan stok saat status pesanan diubah
+        static::updated(function (Order $order) {
+            if ($order->isDirty('status') && $order->status === 'cancelled') {
+                self::restoreStock($order);
+            }
+
+            if ($order->isDirty('status') && $order->getOriginal('status') === 'cancelled' && $order->status !== 'cancelled') {
+                self::reduceStock($order);
+            }
+        });
+
+        // Kembalikan stok jika pesanan dihapus
+        static::deleted(function (Order $order) {
+            if ($order->status !== 'cancelled') {
+                self::restoreStock($order);
+            }
+        });
+    }
+
+    public static function reduceStock(Order $order): void
+    {
+        foreach ($order->items as $item) {
+            if ($item->product) {
+                $item->product->decrement('stock', $item->quantity);
+            }
+        }
+    }
+
+    public static function restoreStock(Order $order): void
+    {
+        foreach ($order->items as $item) {
+            if ($item->product) {
+                $item->product->increment('stock', $item->quantity);
+            }
+        }
     }
 }
