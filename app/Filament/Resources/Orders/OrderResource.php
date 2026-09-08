@@ -2,30 +2,29 @@
 
 namespace App\Filament\Resources\Orders;
 
-use App\Filament\Resources\Orders\Pages;
+use App\Models\Order; // <-- Pastikan baris ini ada
 use App\Models\Customer;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShippingRate;
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\FileUpload;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Repeater;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-
-// Actions
 use Filament\Actions\Action;
-use Filament\Actions\EditAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderResource extends Resource
 {
+
     protected static ?string $model = Order::class;
 
     protected static \BackedEnum|string|null $navigationIcon = 'heroicon-o-shopping-bag';
@@ -97,7 +96,6 @@ class OrderResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(3),
 
-                // --- Informasi Pembayaran ---
                 Section::make('Informasi Pembayaran')
                     ->schema([
                         Select::make('payment_method')
@@ -128,7 +126,6 @@ class OrderResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(2),
 
-                // --- Informasi Pengiriman & Resi ---
                 Section::make('Informasi Pengiriman & Resi')
                     ->schema([
                         Select::make('courier')
@@ -156,7 +153,6 @@ class OrderResource extends Resource
                         Repeater::make('items')
                             ->relationship()
                             ->schema([
-                                // 1. Pilih Produk
                                 Select::make('product_id')
                                     ->label('Produk')
                                     ->options(Product::pluck('name', 'id'))
@@ -173,7 +169,6 @@ class OrderResource extends Resource
                                         }
                                     }),
 
-                                // 2. Harga Satuan (Bisa Edit Manual)
                                 TextInput::make('unit_price')
                                     ->label('Harga Satuan')
                                     ->numeric()
@@ -185,7 +180,6 @@ class OrderResource extends Resource
                                         $set('subtotal', (float) $state * $quantity);
                                     }),
 
-                                // 3. Qty
                                 TextInput::make('quantity')
                                     ->label('Qty')
                                     ->numeric()
@@ -197,7 +191,6 @@ class OrderResource extends Resource
                                         $set('subtotal', (int) $state * $price);
                                     }),
 
-                                // 4. Subtotal Item
                                 TextInput::make('subtotal')
                                     ->label('Subtotal')
                                     ->numeric()
@@ -264,8 +257,8 @@ class OrderResource extends Resource
                     ->label('Bayar')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
                         'paid' => 'success',
+                        'pending' => 'warning',
                         'failed' => 'danger',
                         default => 'gray',
                     }),
@@ -293,14 +286,23 @@ class OrderResource extends Resource
             ])
             ->filters([])
             ->actions([
-                Action::make('print')
+                Action::make('cetak')
                     ->label('Cetak')
                     ->icon('heroicon-o-printer')
                     ->color('success')
-                    ->url(fn (Order $record): string => route('orders.print', $record))
-                    ->openUrlInNewTab(),
+                    ->button()
+                    ->size('xs')
+                    ->action(function ($record) {
+                        $pdf = Pdf::loadView('invoices.order', ['order' => $record]);
+                        return response()->streamDownload(
+                            fn () => print($pdf->output()),
+                            "Invoice-{$record->order_number}.pdf"
+                        );
+                    }),
 
-                EditAction::make(),
+                EditAction::make()
+                    ->button()
+                    ->size('xs'),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -323,9 +325,6 @@ class OrderResource extends Resource
         ];
     }
 
-    /**
-     * Hitung ulang Subtotal Produk & Total Bayar
-     */
     public static function recalculateTotals($get, $set): void
     {
         $items = $get('items') ?? [];
