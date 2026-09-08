@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
        Schema::defaultStringLength(191);
 
         // Registrasi Observers
+       
         Order::observe(OrderObserver::class);
         OrderItem::observe(OrderItemObserver::class);
     }

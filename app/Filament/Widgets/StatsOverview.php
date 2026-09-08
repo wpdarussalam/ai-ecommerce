@@ -10,49 +10,44 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverview extends BaseWidget
 {
-    // Interval refresh otomatis (non-static)
+    protected int | string | array $columnSpan = 'full';
+    
     protected ?string $pollingInterval = '15s';
 
     protected function getStats(): array
     {
-        // 1. Hitung Total Penjualan Bulan Ini (Hanya status completed atau paid)
-        $totalPenjualanBulanIni = Order::whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->where(function ($query) {
-                $query->where('status', 'completed')
-                      ->orWhere('payment_status', 'paid');
-            })
-            ->sum('total_amount');
+        // 1. Hitung Total Penjualan (Hanya order yang tidak cancelled)
+        $totalPenjualan = Order::where('status', '!=', 'cancelled')->sum('total_amount');
 
-        // 2. Hitung Pesanan Pending (Butuh Tindakan)
-        $pesananPending = Order::where('status', 'pending')->count();
+        // 2. Hitung Pesanan yang Perlu Diproses (status processing / pending)
+        $pesananPending = Order::whereIn('status', ['pending', 'processing'])->count();
 
         // 3. Hitung Total Pelanggan
         $totalPelanggan = Customer::count();
 
-        // 4. Hitung Total Produk
-        $totalProduk = Product::count();
+        // 4. Hitung Produk Stok Menipis (stok <= 3)
+        $stokMenipis = Product::where('stock', '<=', 3)->count();
 
         return [
-            Stat::make('Penjualan Bulan Ini', 'Rp ' . number_format($totalPenjualanBulanIni, 0, ',', '.'))
-                ->description('Total omset bulan ' . now()->translatedFormat('F Y'))
+            Stat::make('Total Penjualan', 'IDR ' . number_format($totalPenjualan, 0, ',', '.'))
+                ->description('Semua pesanan aktif')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success'),
 
-            Stat::make('Pesanan Pending', $pesananPending . ' Pesanan')
-                ->description('Menunggu diproses/dikonfirmasi')
-                ->descriptionIcon('heroicon-m-clock')
-                ->color($pesananPending > 0 ? 'warning' : 'gray'),
+            Stat::make('Pesanan Diproses', $pesananPending)
+                ->description('Butuh tindakan')
+                ->descriptionIcon('heroicon-m-shopping-bag')
+                ->color('warning'),
 
-            Stat::make('Total Pelanggan', $totalPelanggan . ' Orang')
+            Stat::make('Total Pelanggan', $totalPelanggan)
                 ->description('Pelanggan terdaftar')
-                ->descriptionIcon('heroicon-m-user-group')
+                ->descriptionIcon('heroicon-m-users')
                 ->color('info'),
 
-            Stat::make('Total Produk', $totalProduk . ' Item')
-                ->description('Jumlah variasi produk aktif')
-                ->descriptionIcon('heroicon-m-cube')
-                ->color('primary'),
+            Stat::make('Stok Menipis', $stokMenipis)
+                ->description('Stok <= 3 pcs')
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
+                ->color('danger'),
         ];
     }
 }

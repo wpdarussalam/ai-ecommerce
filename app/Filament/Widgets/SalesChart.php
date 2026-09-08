@@ -10,35 +10,55 @@ class SalesChart extends ChartWidget
 {
     protected ?string $heading = 'Grafik Penjualan';
 
+    // 1. Batasi tinggi maksimal grafik (misal: 250px atau 300px)
+    protected ?string $maxHeight = '260px';
+
+    // 2. Gunakan span full atau atur sesuai grid agar simetris
+    protected int | string | array $columnSpan = 'full';
+
     protected function getData(): array
     {
-        $data = Order::where('status', '!=', 'cancelled')
-            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->pluck('total', 'date')
-            ->toArray();
-
+        $data = [];
         $labels = [];
-        $totals = [];
 
-        foreach ($data as $date => $total) {
-            $labels[] = Carbon::parse($date)->format('d M Y');
-            $totals[] = (float) $total;
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $monthName = $date->translatedFormat('F Y');
+            
+            $total = Order::where('status', '!=', 'cancelled')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->sum('total_amount');
+
+            $labels[] = $monthName;
+            $data[] = $total;
         }
 
         return [
             'datasets' => [
                 [
                     'label' => 'Total Penjualan (Rp)',
-                    'data' => $totals,
-                    'borderColor' => '#eab308',
-                    'backgroundColor' => 'rgba(234, 179, 8, 0.15)',
+                    'data' => $data,
+                    'borderColor' => '#f59e0b',
+                    'backgroundColor' => 'rgba(245, 158, 11, 0.15)',
                     'fill' => true,
-                    'tension' => 0.3,
+                    'tension' => 0.3, // Membuat garis grafik agak melengkung mulus
                 ],
             ],
             'labels' => $labels,
+        ];
+    }
+
+    // 3. Tambahkan konfigurasi Chart options agar proporsional
+    protected function getOptions(): array
+    {
+        return [
+            'maintainAspectRatio' => false,
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                ],
+            ],
         ];
     }
 
