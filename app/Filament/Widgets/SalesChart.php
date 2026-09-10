@@ -8,12 +8,12 @@ use Illuminate\Support\Carbon;
 
 class SalesChart extends ChartWidget
 {
+    protected static ?int $sort = 2;
+
     protected ?string $heading = 'Grafik Penjualan';
 
-    // 1. Batasi tinggi maksimal grafik (misal: 250px atau 300px)
     protected ?string $maxHeight = '260px';
 
-    // 2. Gunakan span full atau atur sesuai grid agar simetris
     protected int | string | array $columnSpan = 'full';
 
     protected function getData(): array
@@ -42,14 +42,13 @@ class SalesChart extends ChartWidget
                     'borderColor' => '#f59e0b',
                     'backgroundColor' => 'rgba(245, 158, 11, 0.15)',
                     'fill' => true,
-                    'tension' => 0.3, // Membuat garis grafik agak melengkung mulus
+                    'tension' => 0.3,
                 ],
             ],
             'labels' => $labels,
         ];
     }
 
-    // 3. Tambahkan konfigurasi Chart options agar proporsional
     protected function getOptions(): array
     {
         return [

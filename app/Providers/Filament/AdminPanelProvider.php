@@ -29,6 +29,9 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Aura Commerce') // <-- Nama brand dipasang di sini
             ->maxContentWidth('full')
+            ->brandLogo(fn () => asset('images/logo.svg'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(fn () => asset('images/favicon.png'))
             ->login()
             ->colors([
                 'primary' => Color::Blue,
@@ -40,9 +43,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                \App\Filament\Widgets\StatsOverview::class,
-                \App\Filament\Widgets\SalesChart::class,
-                \App\Filament\Widgets\LatestOrders::class,
+                //\App\Filament\Widgets\StatsOverview::class,
+                //\App\Filament\Widgets\SalesChart::class,
+                //\App\Filament\Widgets\LatestOrders::class,
             ])
             ->middleware([
                 EncryptCookies::class,

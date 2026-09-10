@@ -6,8 +6,8 @@ use App\Filament\Resources\Orders\OrderResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use pxlrbt\FilamentExcel\Actions\Pages\ExportAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
 use pxlrbt\FilamentExcel\Columns\Column;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class ListOrders extends ListRecords
 {
@@ -18,9 +18,9 @@ class ListOrders extends ListRecords
         return [
             Actions\CreateAction::make(),
 
-            // Tombol Export Excel / CSV
             ExportAction::make()
                 ->label('Export Laporan')
+                ->icon('heroicon-m-arrow-down-tray')
                 ->color('success')
                 ->exports([
                     ExcelExport::make()

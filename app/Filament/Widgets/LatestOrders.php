@@ -21,12 +21,19 @@ class LatestOrders extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
-                    ->label('No. Order'),
-                Tables\Columns\TextColumn::make('customer_name')
-                    ->label('Pelanggan'),
+                    ->label('No. Order')
+                    ->searchable(),
+
+                // Mengambil nama dari relasi customer / user
+                Tables\Columns\TextColumn::make('customer.name')
+                    ->label('Pelanggan')
+                    ->default(fn ($record) => $record->customer_name ?? 'Pelanggan Umum')
+                    ->placeholder('Pelanggan Umum'),
+
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total')
                     ->money('IDR'),
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -36,9 +43,10 @@ class LatestOrders extends BaseWidget
                         'cancelled' => 'danger',
                         default => 'gray',
                     }),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal')
-                    ->dateTime(),
+                    ->dateTime('d M Y H:i'),
             ]);
     }
 }
