@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\MidtransCallbackController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,7 +26,12 @@ Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('car
 // --- CHECKOUT & TRANSAKSI ---
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-Route::get('/checkout/success/{id}', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/success/{order_number}', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/pay/{order_number}', [CheckoutController::class, 'pay'])->name('checkout.pay');
+
 
 // --- ADMIN PANEL ACTIONS ---
 Route::get('/admin/orders/{id}/print', [InvoiceController::class, 'print'])->name('admin.orders.print');
+
+Route::post('/midtrans-callback', [MidtransCallbackController::class, 'callback']);
+

@@ -34,13 +34,18 @@ class ProductForm
                                             ->required()
                                             ->label('Kategori'),
 
+                                        TextInput::make('sku')
+                                            ->label('SKU')
+                                            ->required()
+                                            ->unique(ignoreRecord: true),
+
                                         TextInput::make('name')
                                             ->required()
                                             ->maxLength(255)
                                             ->label('Nama Produk')
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(
-                                                fn(string $operation, $state, $set) =>
+                                                fn (string $operation, $state, $set) =>
                                                 $operation === 'create' ? $set('slug', Str::slug($state)) : null
                                             ),
 
@@ -52,7 +57,8 @@ class ProductForm
 
                                         TextInput::make('short_description')
                                             ->maxLength(255)
-                                            ->label('Deskripsi Singkat'),
+                                            ->label('Deskripsi Singkat')
+                                            ->columnSpanFull(),
 
                                         MarkdownEditor::make('description')
                                             ->columnSpanFull()
@@ -72,16 +78,12 @@ class ProductForm
                                             ->prefix('Rp')
                                             ->label('Harga Coret (Lama)'),
 
-                                        TextInput::make('sku')
-                                            ->label('SKU')
-                                            ->maxLength(100),
-
                                         TextInput::make('stock')
                                             ->numeric()
                                             ->default(0)
                                             ->required()
                                             ->label('Jumlah Stok'),
-                                    ])->columns(2),
+                                    ])->columns(3),
 
                                 Section::make('Galeri Gambar Produk')
                                     ->schema([
@@ -89,12 +91,12 @@ class ProductForm
                                             ->relationship('images')
                                             ->schema([
                                                 FileUpload::make('image')
+                                                    ->label('Foto Produk')
                                                     ->image()
                                                     ->disk('public')
-                                                    ->directory('products/gallery')
-                                                    //->visibility('public')
-                                                    //->required()
-                                                    ->label('Foto Galeri'),
+                                                    ->directory('products')
+                                                    ->visibility('public')
+                                                    ->columnSpanFull(),
 
                                                 TextInput::make('position')
                                                     ->numeric()
@@ -104,7 +106,7 @@ class ProductForm
                                                 Toggle::make('is_primary')
                                                     ->label('Gambar Utama Galeri'),
                                             ])
-                                            ->columns(3)
+                                            ->columns(2)
                                             ->defaultItems(0)
                                             ->addActionLabel('Tambah Foto Galeri'),
                                     ]),
@@ -150,9 +152,26 @@ class ProductForm
                                             ->label('Meta Keywords'),
                                     ])
                                     ->collapsible(),
-                            ])
-                            ->columnSpan(1),
+                                Section::make('SEO Optimization')
+                                    ->schema([
+                                        TextInput::make('meta_title')
+                                            ->maxLength(255)
+                                            ->label('Meta Title'),
+
+                                        TextInput::make('meta_description')
+                                            ->maxLength(255)
+                                            ->label('Meta Description'),
+
+                                        TextInput::make('meta_keywords')
+                                            ->maxLength(255)
+                                            ->label('Meta Keywords'),
+                                    ])
+                                    ->collapsible(),
+                            ]),
                     ]),
-            ]);
+            ]); // <-- Pastikan diakhiri dengan titik koma (;), bukan koma (,)
     }
-}
+}                            
+                    
+            
+

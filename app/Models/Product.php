@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -23,7 +24,6 @@ class Product extends Model
         'sku',
         'stock',
         'image',
-        //'is_active',
         'featured',
         'status',
         'views',
@@ -41,12 +41,18 @@ class Product extends Model
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    public function images(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * Relasi: Produk memiliki banyak Gambar (diurutkan berdasarkan posisi)
+     */
+    public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('position', 'asc');
     }
 
-    public function orderItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /**
+     * Relasi: Produk memiliki banyak Item Pesanan
+     */
+    public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
@@ -61,7 +67,5 @@ class Product extends Model
                 $product->slug = Str::slug($product->name);
             }
         });
-
-        
     }
 }

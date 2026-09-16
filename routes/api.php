@@ -4,8 +4,12 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\MidtransCallbackController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+
 
 // Public Routes
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -25,4 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/checkout', [OrderController::class, 'checkout']);
     Route::get('/orders', [OrderController::class, 'index']);
+
 });
+
+Route::post('/midtrans-callback', [MidtransCallbackController::class, 'callback']);

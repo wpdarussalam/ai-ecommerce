@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Categories\Tables;
 
 use App\Filament\Resources\Products\ProductResource;
+use App\Models\Category;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -43,12 +44,12 @@ class CategoriesTable
                 //
             ])
             ->actions([
-                // Aksi Pintas: Mengarahkan langsung ke halaman produk yang ter-filter
-                Action::make('view_products')
+                // Tombol Pintas ke Halaman Produk Ter-filter
+                Action::make('lihat_produk')
                     ->label('Lihat Produk')
-                    ->icon('heroicon-m-shopping-bag')
+                    ->icon('heroicon-o-shopping-bag')
                     ->color('info')
-                    ->url(fn ($record) => ProductResource::getUrl('index', [
+                    ->url(fn (Category $record): string => ProductResource::getUrl('index', [
                         'tableFilters' => [
                             'category_id' => [
                                 'value' => $record->id,

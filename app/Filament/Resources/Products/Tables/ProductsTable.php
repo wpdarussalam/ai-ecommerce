@@ -14,12 +14,24 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ProductsTable
 {
-    public static function configure(Table $table): Table
+public static function configure(Table $table): Table
     {
         return $table
             ->columns([
+                // Penanganan gambar dari kolom 'image' atau relasi 'images'
                 ImageColumn::make('image')
-                    ->label('Foto'),
+                    ->label('Foto')
+                    ->disk('public')
+                    ->getStateUsing(function ($record) {
+                        // 1. Jika ada di kolom 'image' tabel products
+                        if ($record->image) {
+                            return $record->image;
+                        }
+                        // 2. Jika tidak ada, ambil gambar pertama dari relasi 'images'
+                        return $record->images->first()?->image;
+                    })
+                    ->defaultImageUrl(url('/images/no-image.jpg')) // Fallback gambar default
+                    ->square(),
 
                 TextColumn::make('name')
                     ->label('Nama Produk')

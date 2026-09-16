@@ -12,8 +12,12 @@ class HomeController extends Controller
     {
         // Mengambil kategori & produk terbaru dari database
         $categories = Category::all();
-        $products = Product::where('stock', '>', 0)->latest()->get();
+       //$products = Product::where('status', 'published')->get();
+       $products = Product::where('status', true)->get();
 
-        return view('frontend.home', compact('categories', 'products'));
+        //return view('frontend.home', compact('categories', 'products'));
+       return view('frontend.home');
+       
+
     }
 }

@@ -49,80 +49,9 @@
     </div>
 </div>
 
-<!-- 3. Section Kategori -->
-<div class="bg-white p-4 rounded-md shadow-sm border border-gray-100 mb-8">
-    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Kategori</h2>
-    <div class="flex flex-wrap gap-2">
-        <a href="#" class="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-full text-xs font-semibold flex items-center gap-2 hover:bg-blue-100 transition">
-            <i class="fa-solid fa-border-all"></i> Semua
-        </a>
-        @foreach($categories as $category)
-            <a href="?category={{ $category->id }}" class="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-full text-xs font-medium flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition">
-                <i class="fa-solid fa-tag text-blue-500"></i> {{ $category->name }}
-            </a>
-        @endforeach
-    </div>
-</div>
-
-<!-- 4. Section Rekomendasi Produk -->
-<div id="produk" class="mb-8">
-    <div class="flex items-center justify-between mb-4 border-b pb-2">
-        <h2 class="text-base font-bold text-gray-800 flex items-center gap-2">
-            <i class="fa-solid fa-fire text-amber-500"></i> REKOMENDASI PRODUK
-        </h2>
-    </div>
-
-    <!-- Grid Produk -->
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        @forelse($products as $product)
-            <div class="bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-md transition duration-200 overflow-hidden flex flex-col justify-between group">
-                <div>
-                    <!-- Gambar Produk & Badge -->
-                    <div class="relative bg-gray-50 aspect-square flex items-center justify-center p-3 overflow-hidden">
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="object-contain h-full w-full group-hover:scale-105 transition duration-300">
-                        @else
-                            <div class="text-gray-400 text-xs flex flex-col items-center">
-                                <i class="fa-regular fa-image text-3xl mb-1"></i>
-                                No Image
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Informasi Produk -->
-                    <div class="p-3">
-                        <h3 class="text-xs font-semibold text-gray-800 line-clamp-2 h-8 mb-1" title="{{ $product->name }}">
-                            {{ $product->name }}
-                        </h3>
-                        <p class="text-blue-600 font-bold text-sm">
-                            Rp {{ number_format($product->price, 0, ',', '.') }}
-                        </p>
-                        
-                        <div class="flex items-center justify-between text-[11px] text-gray-400 mt-2">
-                            <span>Stok: {{ $product->stock ?? 0 }}</span>
-                            <span class="text-amber-500 font-medium flex items-center gap-1">
-                                <i class="fa-solid fa-star text-[10px]"></i> 5.0
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tombol + Keranjang -->
-                <div class="p-3 pt-0">
-                    <form action="{{ route('cart.add', $product->id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-cart-plus"></i> + Keranjang
-                        </button>
-                    </form>
-                </div>
-            </div>
-        @empty
-            <div class="col-span-full bg-white p-8 text-center text-gray-500 text-sm rounded border">
-                Belum ada produk yang tersedia saat ini.
-            </div>
-        @endforelse
-    </div>
+<!-- 3. Integrasi Livewire Volt Catalog (Filter Kategori & Produk Real-time) -->
+<div id="produk">
+  <livewire:product-catalog />
 </div>
 
 @endsection

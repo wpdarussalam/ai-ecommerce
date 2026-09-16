@@ -24,11 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Kode lama kamu (tetap dipertahankan)
-       Schema::defaultStringLength(191);
+        Schema::defaultStringLength(191);
 
         // Registrasi Observers
-       
         Order::observe(OrderObserver::class);
         OrderItem::observe(OrderItemObserver::class);
     }

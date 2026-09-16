@@ -1,12 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura Commerce - Belanja Online Murah & Terpercaya</title>
+    <title>Aura Commerce</title>
     <!-- CDN Tailwind CSS & FontAwesome Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 1. SINKRONISASI STYLES LIVEWIRE -->
+    @livewireStyles
 </head>
 <body class="bg-gray-100 font-sans">
 
@@ -66,6 +69,6 @@
             <p>&copy; {{ date('Y') }} <strong>Aura Commerce</strong>. Hak Cipta Dilindungi.</p>
         </div>
     </footer>
-
+@livewireScripts
 </body>
 </html>
