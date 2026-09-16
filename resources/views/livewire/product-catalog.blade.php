@@ -73,9 +73,9 @@
                 </div>
 
                 <div class="p-4 pt-0">
-                    <a href="#" class="w-full block text-center bg-gray-900 hover:bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-xl transition duration-200">
-                        Lihat Detail
-                    </a>
+                    <a href="{{ route('product.detail', $product->slug) }}" wire:navigate class="w-full block text-center bg-gray-900 hover:bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-xl transition duration-200">
+                    Lihat Detail
+                </a>
                 </div>
             </div>
         @empty

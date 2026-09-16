@@ -7,6 +7,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\MidtransCallbackController;
+use App\Livewire\ProductDetail;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -35,3 +37,5 @@ Route::get('/admin/orders/{id}/print', [InvoiceController::class, 'print'])->nam
 
 Route::post('/midtrans-callback', [MidtransCallbackController::class, 'callback']);
 
+//---SLUG PRODUK---
+Route::get('/product/{slug}', ProductDetail::class)->name('product.detail');
